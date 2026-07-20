@@ -115,15 +115,31 @@ lineage points further:
   sealed families, nested constructor patterns with product-space
   exhaustiveness — the checker grows from an obligations layer into a real
   typechecker.
-- **A compiled execution path** (open research question, under active
-  investigation): the org's prior art proves in-house execution engines are
-  within reach — arbiter parses on gotreesitter, compiles, and executes on a
-  purpose-built bytecode VM at ~200ns/eval with binary bundles for
-  edge/mobile. Whether goala's second backend should be an arbiter-lineage
-  VM, a new purpose-built VM, a WASM target, or deeper investment in the
-  transpile path instead is a design decision to be made on merit, not
-  sentiment — an evaluation of the full design space against goala's goals
-  is in progress and will graduate into this spec.
+- **Execution path (decided): Go IS the runtime — permanently.**
+  Transpile-to-Go is not a bootstrap stage; it is goala's execution
+  semantics. The core promise — any Go type nameable, any Go package
+  importable, hand-written Go and goala in the same package calling each
+  other, zero runtime — is only cheap when the Go toolchain is the backend:
+  every interpreter or VM path re-prices Go interop as an FFI project and
+  forks semantic authority away from the Go-compiler backstop. The org's own
+  code settles the arbiter question: arbiter's VM is a purpose-built,
+  bounded expression evaluator over fact contexts (56 opcodes, no call
+  frames, no closures, `DataContext.Get` as its entire external surface) —
+  what it contributes to goala is the end-to-end language-shipping pattern,
+  the conformance-matrix discipline, and the confidence, not a reusable
+  runtime; the embedded-decision niche a goala VM would chase is the niche
+  arbiter already serves. The "second backend" budget goes instead to:
+  (1) **WASM as a build target, not a backend** — `goala build -target
+  wasm|wasip1` (TinyGo opt-in) over emitted Go, riding gotreesitter's proven
+  wasm builds for browser/edge/sandboxed execution with zero semantic drift;
+  (2) **a transpile-backed REPL** (session accumulation over `go run`, plus
+  the wasm playground) with identical semantics by construction; (3) the
+  deeper type system (previous bullet). One revisit clause: if a
+  demonstrated, paying embeddability demand arrives that neither arbiter nor
+  wasm can serve, a deliberately closed-world interpreter (registered host
+  functions only, starlark-go-shaped — explicitly NOT "any Go package
+  importable") may be scoped as a separate product. Absent that evidence,
+  there is no second backend.
 - **Self-hosting pressure**: goala's own toolchain (checker, transpiler) is
   the first serious goala codebase once bootstrapped.
 

@@ -134,13 +134,16 @@ func TestCParity(t *testing.T) {
 	objMain := filepath.Join(tmp, "walker.o")
 	walker := filepath.Join(tmp, "walker")
 
+	// -O0: the emitted ts_lex is a single ~300k-line function whose compile time
+	// explodes under any optimizer; -O0 keeps this harness practical (~30s vs
+	// many minutes) and optimization is irrelevant to a parse-parity check.
 	steps := [][]string{
-		{"-std=c11", "-O1", "-D_DEFAULT_SOURCE", "-include", shimPath,
+		{"-std=c11", "-O0", "-D_DEFAULT_SOURCE", "-include", shimPath,
 			"-I" + filepath.Join(tmp, "include"), "-c", parserPath, "-o", objParser},
-		{"-std=c11", "-O1", "-D_DEFAULT_SOURCE",
+		{"-std=c11", "-O0", "-D_DEFAULT_SOURCE",
 			"-I" + filepath.Join(runtimeDir, "include"), "-I" + filepath.Join(runtimeDir, "src"),
 			"-c", filepath.Join(runtimeDir, "src", "lib.c"), "-o", objLib},
-		{"-std=c11", "-O1", "-I" + filepath.Join(runtimeDir, "include"),
+		{"-std=c11", "-O0", "-I" + filepath.Join(runtimeDir, "include"),
 			"-c", mainPath, "-o", objMain},
 		{objParser, objLib, objMain, "-pthread", "-o", walker},
 	}
