@@ -1,0 +1,32 @@
+package main
+
+import (
+    "fmt"
+    "os"
+    "strconv"
+)
+
+// Result[T] and Option[T] are built-in sealed-style types (zero-runtime,
+// injected on use).
+func readPort(path string) Result[int] {
+    let data = os.ReadFile(path)?
+    let port = strconv.Atoi(string(data))?
+    if port <= 0 {
+        return Err[int](fmt.Errorf("bad port %d", port))
+    }
+    Ok(port)
+}
+
+func lookup(env map[string]string, key string) Option[string] {
+    match env[key] {
+        Some(v) => Some(v),
+        None => None[string](),
+    }
+}
+
+func main() {
+    match readPort("port.txt") {
+        Ok(p) => fmt.Println(f"listening on ${p}"),
+        Err(e) => fmt.Println(f"failed: ${e}"),
+    }
+}

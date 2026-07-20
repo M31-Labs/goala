@@ -1,0 +1,53 @@
+package main
+
+import (
+    "fmt"
+    "os"
+    "strings"
+)
+
+sealed Token {
+    Word(text string),
+    Number(value int),
+    Punct(ch string),
+}
+
+struct Stats(words int, numbers int, puncts int)
+
+func classify(raw string) Token = match raw {
+    r if isNumeric(r) => Number(mustAtoi(r)),
+    r if len(r) == 1 && strings.ContainsAny(r, ".,;:!?") => Punct(r),
+    r => Word(r),
+}
+
+func tally(tokens []Token) Stats {
+    var s = Stats(0, 0, 0)
+    for t in tokens {
+        match t {
+            Word(_) => { s.words = s.words + 1 },
+            Number(_) => { s.numbers = s.numbers + 1 },
+            Punct(_) => { s.puncts = s.puncts + 1 },
+        }
+    }
+    s
+}
+
+func load(path string) Result[[]Token] {
+    let data = os.ReadFile(path)?
+    let fields = strings.Fields(string(data))
+    var tokens = []Token{}
+    for f in fields {
+        tokens = append(tokens, classify(f))
+    }
+    Ok(tokens)
+}
+
+func main() {
+    match load("input.txt") {
+        Ok(tokens) => {
+            let s = tally(tokens)
+            fmt.Println(f"words=${s.words} numbers=${s.numbers} puncts=${s.puncts}")
+        },
+        Err(e) => fmt.Println(f"error: ${e}"),
+    }
+}

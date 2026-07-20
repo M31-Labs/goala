@@ -1,0 +1,45 @@
+package geometry
+
+import (
+    "fmt"
+    "math"
+)
+
+// Sealed sum type: the flagship feature. Cases are records; the set of cases
+// is closed at the package boundary.
+sealed Shape {
+    Circle(radius float64),
+    Rect(width float64, height float64),
+    Point,
+}
+
+// Concise record (product type).
+struct Vec(x float64, y float64)
+
+// Function with a single-expression body and exhaustive match.
+func area(s Shape) float64 = match s {
+    Circle(r) => math.Pi * r * r,
+    Rect(w, h) => w * h,
+    Point => 0,
+}
+
+// Method: Go receiver syntax, expression body.
+func (v Vec) norm() float64 = math.Sqrt(v.x * v.x + v.y * v.y)
+
+// derive: auto-generated impls (v1: Stringer only).
+derive Stringer for Shape
+
+// Plain Go type declarations remain available for aliases and interop.
+type Meters = float64
+
+func describe(s Shape) string = match s {
+    Circle(r) => f"circle r=${r}",
+    Rect(w, h) => f"rect ${w}x${h}",
+    Point => "point",
+}
+
+func main() {
+    let c = Circle(2.0)
+    fmt.Println(area(c))
+    fmt.Println(describe(c))
+}
