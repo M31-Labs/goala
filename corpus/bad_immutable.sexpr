@@ -1,0 +1,22 @@
+(source_file
+  (package_clause
+    (package_identifier))
+  (comment)
+  (comment)
+  (comment)
+  (function_declaration
+    (identifier)
+    (parameter_list)
+    (type_identifier
+      (type_identifier))
+    (block
+      (let_declaration
+        (identifier)
+        (int_literal))
+      (assignment
+        (identifier)
+        (binary_expression
+          (identifier)
+          (int_literal)))
+      (expression_statement
+        (identifier)))))

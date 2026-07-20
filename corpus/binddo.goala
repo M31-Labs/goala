@@ -1,0 +1,18 @@
+package orders
+
+// bind do-notation (DESIGN 2.2): `bind x = e` desugars to `let x = e?`.
+// Only valid in functions returning Result/Option/(T, error).
+struct Receipt(id int, amount int)
+
+func fetchOrder(id int) Result[int] = Ok(id)
+
+func validate(order int) Result[int] = Ok(order)
+
+func charge(valid int) Result[int] = Ok(valid * 2)
+
+func fetchReceipt(id int) Result[Receipt] {
+    bind order = fetchOrder(id)
+    bind valid = validate(order)
+    bind payment = charge(valid)
+    Ok(Receipt(order, payment))
+}

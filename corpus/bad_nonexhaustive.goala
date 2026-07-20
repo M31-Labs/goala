@@ -1,0 +1,15 @@
+package bad
+
+// DELIBERATELY INVALID (semantic, not syntactic): this file parses ERROR-free
+// but the match on Shape omits the Point case. Phase 3's exhaustiveness check
+// must reject it with "match on Shape is not exhaustive: missing Point".
+sealed Shape {
+    Circle(radius float64),
+    Rect(width float64, height float64),
+    Point,
+}
+
+func area(s Shape) float64 = match s {
+    Circle(r) => 3 * r * r,
+    Rect(w, h) => w * h,
+}

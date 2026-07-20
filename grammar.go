@@ -11,8 +11,9 @@ package goala
 // language-authoring tool, not merely a Go-superset tool.
 //
 // Keyword set (extracted because SetWord("identifier") is set):
-//   package import func sealed struct type interface let var bind match if
-//   else for in return break continue derive map chan func
+//
+//	package import func sealed struct type interface let var bind match if
+//	else for in return break continue derive map chan func
 //
 // The first Define below (source_file) is the start rule.
 func Grammar() *GrammarType {

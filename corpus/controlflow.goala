@@ -1,0 +1,39 @@
+package flow
+
+import "fmt"
+
+// Control flow (DESIGN 2.2): for-in over slices, indexed for-in, condition-for,
+// break/continue, and early return with a value.
+func sumAll(xs []int) int {
+    var total = 0
+    for x in xs {
+        total = total + x
+    }
+    total
+}
+
+func indexed(xs []string) {
+    for i, s in xs {
+        fmt.Println(i, s)
+    }
+}
+
+func countdown(n int) {
+    for n > 0 {
+        fmt.Println(n)
+        n = n - 1
+        if n == 3 {
+            break
+        }
+        continue
+    }
+}
+
+func firstEven(xs []int) Option[int] {
+    for x in xs {
+        if x % 2 == 0 {
+            return Some(x)
+        }
+    }
+    None[int]()
+}

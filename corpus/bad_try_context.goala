@@ -1,0 +1,11 @@
+package bad
+
+import "os"
+
+// DELIBERATELY INVALID (semantic, not syntactic): this file parses ERROR-free
+// but `?` is used in a function whose result type is plain `int`, not
+// Result/Option/(T, error). Phase 3's `?`-context obligation must reject it.
+func readIt(path string) int {
+    let data = os.ReadFile(path)?
+    len(data)
+}

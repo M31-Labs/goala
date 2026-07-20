@@ -1,0 +1,36 @@
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+    "strconv"
+)
+
+// Interop-heavy sample (DESIGN Phase 0): Go stdlib calls returning (T, error)
+// auto-lifted through `?`, selector chains on Go values, generic Err[int].
+func fetch(url string) Result[string] {
+    let resp = http.Get(url)?
+    let body = io.ReadAll(resp.Body)?
+    Ok(string(body))
+}
+
+func fetchStatus(url string) Result[int] {
+    let resp = http.Get(url)?
+    Ok(resp.StatusCode)
+}
+
+func parsePort(raw string) Result[int] {
+    let n = strconv.Atoi(raw)?
+    if n <= 0 {
+        return Err[int](fmt.Errorf("bad port %d", n))
+    }
+    Ok(n)
+}
+
+func main() {
+    match fetch("http://example.com") {
+        Ok(body) => fmt.Println(f"got ${len(body)} bytes"),
+        Err(e) => fmt.Println(f"error: ${e}"),
+    }
+}

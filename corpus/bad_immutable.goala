@@ -1,0 +1,10 @@
+package bad
+
+// DELIBERATELY INVALID (semantic, not syntactic): this file parses ERROR-free
+// but reassigns an immutable `let` binding. Phase 3's immutability check must
+// reject the `x = x + 1` assignment.
+func mutateLet() int {
+    let x = 1
+    x = x + 1
+    x
+}

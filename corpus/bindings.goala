@@ -1,0 +1,19 @@
+package demo
+
+import "fmt"
+
+// Bindings and expressions (DESIGN 2.2): immutable let, mutable var,
+// reassignment, if-expression, both lambda forms, and f-string interpolation.
+func demo() {
+    let x = 42
+    var count = 0
+    count = count + 1
+
+    let label = if count > 0 { "items" } else { "empty" }
+
+    let double = (n int) => n * 2
+    let inc = n => n + 1
+
+    let msg = f"count=${count}, doubled=${double(count)}"
+    fmt.Println(msg, label, inc(1), x)
+}

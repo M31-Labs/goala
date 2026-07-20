@@ -1,0 +1,30 @@
+package types
+
+import "fmt"
+
+// Go interop type declarations (DESIGN 2.2): aliases, interface types with
+// method specs, and composite Go types (function/map/channel/pointer) — all
+// nameable in goala verbatim.
+type Meters = float64
+
+type Handler interface {
+    Handle(msg string) Result[int]
+    Close()
+}
+
+type Callback = func(int) int
+
+type Registry = map[string]Handler
+
+type Pipe = chan string
+
+type NodeRef = *int
+
+func apply(cb Callback, x int) int = cb(x)
+
+func use(h Handler) {
+    match h.Handle("hi") {
+        Ok(n) => fmt.Println(n),
+        Err(e) => fmt.Println(e),
+    }
+}
