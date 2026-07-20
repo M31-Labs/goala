@@ -1,8 +1,8 @@
 package goala
 
 import (
+	_ "embed"
 	"fmt"
-	"sync"
 
 	"github.com/odvcencio/gotreesitter/grammargen"
 )
@@ -56,19 +56,25 @@ func EmitGrammarGoSource() ([]byte, error) {
 	return src, nil
 }
 
-var (
-	highlightOnce  sync.Once
-	highlightQuery string
-)
+//go:embed queries/highlights.scm
+var highlightQuerySource string
 
-// HighlightQuery returns the inferred tree-sitter highlight query for goala,
-// computed once from the grammar. It is the baseline the tuned
-// queries/highlights.scm starts from and the value register/ hands to the
-// grammars registry.
+// HighlightQuery returns goala's tree-sitter highlight query — the hand-tuned
+// queries/highlights.scm, embedded at build time. This is the value register/
+// hands to the grammars registry and the file `goala grammar emit -highlight`
+// writes. It is authored by hand because grammargen's highlight inference is a
+// diff over a base grammar and produces nothing for a from-scratch grammar (see
+// InferredHighlightQuery).
 func HighlightQuery() string {
-	highlightOnce.Do(func() {
-		g := Grammar()
-		highlightQuery = grammargen.GenerateHighlightQueries(g, g)
-	})
-	return highlightQuery
+	return highlightQuerySource
+}
+
+// InferredHighlightQuery returns grammargen's automatically inferred highlight
+// query. For goala it is empty: GenerateHighlightQueries derives captures from
+// the rules an EXTENDED grammar adds over its base, and goala is authored from
+// NewGrammar up (no base to diff against). Kept for completeness and to document
+// the limitation that drives the hand-authored HighlightQuery above.
+func InferredHighlightQuery() string {
+	g := Grammar()
+	return grammargen.GenerateHighlightQueries(g, g)
 }
