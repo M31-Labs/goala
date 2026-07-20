@@ -3,7 +3,7 @@
 A statically-typed, functional-leaning language that transpiles to standard Go.
 Sealed types with **compile-time exhaustive pattern matching**, `Result`/`Option`,
 `?` error propagation, expression-oriented syntax, and frictionless Go interop —
-inspired by [gala](https://github.com/martianoff/gala), built to prove a point.
+a real language on the M31 Labs stack, built to prove a point.
 
 **The point:** goala's entire grammar is one Go function, authored with
 [gotreesitter](https://github.com/odvcencio/gotreesitter)'s `grammargen` —
@@ -95,7 +95,6 @@ demo/                     # the one-command thesis demo
 - [ferrous-wheel](https://github.com/odvcencio/ferrous-wheel) — the template:
   a production-complete language front-end on grammargen (extends Go's grammar).
   goala authors a *distinct* grammar — the stronger proof.
-- [gala](https://github.com/martianoff/gala) — the language inspiration
   (sealed types, monads, do-notation) and the toolchain counter-example
   (ANTLR + JVM + Bazel).
 - [gotreesitter](https://github.com/odvcencio/gotreesitter) /

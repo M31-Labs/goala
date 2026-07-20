@@ -515,6 +515,26 @@ func Grammar() *GrammarType {
 
 	g.Define("_string_fragment", Alias(Token(Pat(`[^"$]+`)), "string_fragment", true))
 
+	// interpreted_string_literal is AUTHORED as a single opaque leaf token rather
+	// than borrowed from Go. Go's rule models the string as `'"' content* imm('"')`
+	// — a plain opening `"` plus a token.immediate closing `"`. Those are two
+	// distinct anonymous tokens that share the display name `"`, and grammargen's
+	// EmitC names BOTH `anon_sym_DQUOTE`, producing a `redeclaration of enumerator`
+	// error in the emitted parser.c (upstream tree-sitter disambiguates the second
+	// as `anon_sym_DQUOTE2`; EmitC does not — see DELIVERABLE grammargen notes).
+	// Authoring the whole literal as one Token keeps the `"`/escape bytes INSIDE a
+	// single terminal, so no bare `"` anonymous symbol is created and the emitted C
+	// enum is collision-free. goala treats string literals as opaque anyway; the
+	// transpiler reads the node text verbatim.
+	g.Define("interpreted_string_literal", Token(Seq(
+		Str(`"`),
+		Repeat(Choice(
+			Pat(`[^"\\\n]+`),
+			Seq(Str(`\`), Pat(`(.|\n)`)),
+		)),
+		Str(`"`),
+	)))
+
 	// -------------------------------------------------------------------------
 	// Patterns (a separate sub-grammar reachable only from match_arm — patterns
 	// are NOT expressions, which is what keeps `Circle(r)` from parsing as a
@@ -567,7 +587,8 @@ func Grammar() *GrammarType {
 		"int_literal",
 		"float_literal",
 		"rune_literal",
-		"interpreted_string_literal",
+		// interpreted_string_literal is authored above (single opaque token) to
+		// dodge the EmitC duplicate-`anon_sym_DQUOTE` collision; not borrowed.
 		"raw_string_literal",
 		"package_clause",
 		"import_declaration",

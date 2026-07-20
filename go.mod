@@ -1,4 +1,4 @@
-module github.com/M31-Labs/goala
+module m31labs.dev/goala
 
 go 1.25.0
 

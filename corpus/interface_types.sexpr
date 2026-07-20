@@ -3,8 +3,7 @@
     (package_identifier))
   (import_declaration
     (import_spec
-      (interpreted_string_literal
-        (interpreted_string_literal_content))))
+      (interpreted_string_literal)))
   (comment)
   (comment)
   (comment)
@@ -87,8 +86,7 @@
               (identifier)
               (identifier))
             (argument_list
-              (interpreted_string_literal
-                (interpreted_string_literal_content))))
+              (interpreted_string_literal)))
           (match_arm
             (constructor_pattern
               (identifier)

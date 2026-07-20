@@ -9,14 +9,17 @@
 
 ## 0. Executive summary
 
-goala is a statically-typed, functional-leaning language that transpiles to standard
-Go. It is inspired by [gala](https://github.com/martianoff/gala) ("Scala on Go"):
+goala is a statically-typed, functional-leaning language for the Go ecosystem:
 sealed types with **compile-time exhaustive pattern matching**, `Option`/`Result`,
-`?` error propagation, do-notation-style `bind`, expression-oriented syntax, and
-frictionless Go interop.
+`?` error propagation, monadic `bind`, expression-oriented syntax, and
+frictionless Go interop. It transpiles to standard, zero-runtime Go.
 
-But goala's *purpose* is not to be a better gala. goala exists to prove the
-**grammargen thesis**:
+goala is an M31 Labs language, built on the house language stack: gotreesitter
+(the pure-Go tree-sitter runtime), grammargen (the pure-Go grammar compiler),
+and the engineering lineage of [arbiter](https://github.com/odvcencio/arbiter) —
+a production language M31 Labs already ships with its own parser (on
+gotreesitter), compiler, and ~200ns bytecode VM. goala is a real language with a
+real roadmap, and its front-end demonstrates the **grammargen thesis**:
 
 > Define a new language's grammar ONCE — in pure Go, using
 > `gotreesitter/grammargen` — and the entire front-end AND tooling ecosystem
@@ -42,17 +45,17 @@ ferrous-wheel/register/register.go), goala inherits:
 - **An LSP**: `canopyls` (canopy/cmd/canopyls) serving cross-file navigation off that index.
 - **Highlighting + queries**: gotreesitter's query engine and highlight inference.
 
-gala structurally cannot do this. Its ANTLR grammar produces exactly one
-artifact — a JVM/Go parser for gala's own compiler — and every editor
-integration (GoLand plugin with local ANTLR parsing, LSP configs for VS
-Code/Neovim) is bespoke, hand-maintained work sitting on a Bazel + JVM
+A conventional language stack cannot do this. An ANTLR- or hand-written-parser
+front-end produces exactly one artifact — a parser for the language's own
+compiler — and every editor integration (IDE plugins, per-editor grammar
+ports, LSP wiring) is bespoke, hand-maintained work on a heavyweight
 toolchain. goala's entire toolchain is `go build`.
 
 The language backend — transpile-to-Go via CST walk — is deliberately the cheap
 part. ferrous-wheel (`~/work/ferrous-wheel`) already proved that pattern to
 production completeness: transpiler, type inference layer, formatter, 19-rule
 linter, LSP, VS Code extension, browser playground, benchmark parity suite.
-goala follows that template, sized down to a coherent gala-inspired subset and
+goala follows that template with a deliberately deep, coherent core, and
 up-leveled in one place ferrous-wheel is weak: **exhaustiveness is checked at
 compile time, not runtime**.
 
@@ -60,19 +63,19 @@ compile time, not runtime**.
 
 ## 1. The thesis, stated precisely
 
-### 1.1 What gala's stack requires
+### 1.1 What a conventional language stack requires
 
-| Layer | gala | goala |
+| Layer | conventional stack (ANTLR/JVM-class) | goala |
 |---|---|---|
-| Grammar authoring | ANTLR4 `.g4` | Go DSL (`grammargen`) in `grammar.go` |
+| Grammar authoring | ANTLR4 `.g4` / hand-written | Go DSL (`grammargen`) in `grammar.go` |
 | Grammar build | ANTLR codegen on the JVM | `go build` (tables built at runtime or embedded blob) |
 | Build system | Bazel (+ shipped Bazel rules) | `go build` / `go install` |
 | Parser runtime | ANTLR runtime | gotreesitter (pure Go, no CGO) |
-| Editor: JetBrains | Hand-built plugin embedding ANTLR parsing | not needed for tree-sitter editors; (VS Code-class editors get the LSP) |
+| Editor: JetBrains | Hand-built plugin embedding its parser | not needed for tree-sitter editors; (VS Code-class editors get the LSP) |
 | Editor: Neovim/Helix/Zed | LSP config only (no native grammar) | **emitted `parser.c` + `highlights.scm`** — native tree-sitter grammar |
-| LSP | Hand-built `gala lsp` | Two tiers: inherited `canopyls` + a thin bespoke `goala lsp` |
+| LSP | Hand-built, single-language | Two tiers: inherited `canopyls` + a thin bespoke `goala lsp` |
 | Code intelligence (refs, call graph, impact, MCP for agents) | none | **inherited from canopy** for free |
-| Language count sharing this infra | 1 (gala) | 206+ (goala joins the registry) |
+| Language count sharing this infra | 1 | 206+ (goala joins the registry) |
 
 ### 1.2 The three proof obligations
 
@@ -101,13 +104,36 @@ Go function. goala is the end-to-end demonstration on a *new* language — not a
 extension of Go's grammar (ferrous-wheel already proved that) but a language
 authored from `NewGrammar("goala")` up.
 
+### 1.4 Beyond transpilation: the depth roadmap
+
+goala is not a front-end demo — it is a language M31 Labs intends to grow.
+The transpile-to-Go backend is v1 because it is the fastest route to a
+complete, usable language with the Go compiler as a semantic backstop. The
+lineage points further:
+
+- **Deeper type system** (post-v1): full local inference, generics over
+  sealed families, nested constructor patterns with product-space
+  exhaustiveness — the checker grows from an obligations layer into a real
+  typechecker.
+- **A compiled execution path** (open research question, under active
+  investigation): the org's prior art proves in-house execution engines are
+  within reach — arbiter parses on gotreesitter, compiles, and executes on a
+  purpose-built bytecode VM at ~200ns/eval with binary bundles for
+  edge/mobile. Whether goala's second backend should be an arbiter-lineage
+  VM, a new purpose-built VM, a WASM target, or deeper investment in the
+  transpile path instead is a design decision to be made on merit, not
+  sentiment — an evaluation of the full design space against goala's goals
+  is in progress and will graduate into this spec.
+- **Self-hosting pressure**: goala's own toolchain (checker, transpiler) is
+  the first serious goala codebase once bootstrapped.
+
 ---
 
 ## 2. Language surface
 
 ### 2.1 Design stance
 
-- **Coherent subset of gala's ideas, not a clone.** Everything included must be
+- **A deep, coherent core — not a demo subset.** Everything included must be
   (a) buildable by a CST-walking transpiler with local type inference, and
   (b) load-bearing for the thesis demo.
 - **Expression-oriented.** `match`, `if`, and blocks are expressions; function
@@ -240,8 +266,8 @@ func fetchReceipt(id int) Result[Receipt] {
 }
 ```
 
-`bind x = e` is defined as exactly `let x = e?`. It exists to preserve the gala
-lineage in demos and reads better in monadic pipelines. It is *not* generic
+`bind x = e` is defined as exactly `let x = e?`. It reads better in monadic
+pipelines and keeps refactors between the two forms mechanical. It is *not* generic
 do-notation: v1 `bind` works only in functions returning `Result[T]`,
 `Option[T]`, or `(T, error)`. (Scope discipline; see 2.4.)
 
@@ -345,17 +371,17 @@ the transpiler must round-trip (Phase 2).
 
 ### 2.4 Deliberately NOT included (scope discipline)
 
-| Excluded | Why | gala has it? |
-|---|---|---|
-| `Future`, `IO`, `Either`, `Validated`, `Try` as distinct types | `Result`/`Option` cover the demo; effect stacks need HKT-ish machinery a CST transpiler shouldn't fake. `Try[T]` ≅ `Result[T]` here. | yes |
-| Generic do-notation / structural `FlatMap` resolution / `also` parallel binds | Requires real typeclass dispatch; v1 `bind` is monomorphic sugar. | yes |
-| Zero-reflection JSON (`Codec[T]`/`StructMeta`) | Great feature, orthogonal to the thesis. `derive Json` is a listed post-v1 extension — the ferrous-wheel `derive` machinery shows the path. | yes |
-| Immutable collections library (`List`, `HashMap`, `TreeSet`…) | Library work, not thesis work. Go slices/maps + `for`/`match` suffice. | yes |
-| Named arguments with defaults | Needs call-site rewriting with full signature knowledge everywhere; cut. | yes |
-| Nested constructor patterns, regex extractors, `Tuple2..5` | Exhaustiveness for nested patterns is a product-space construction; post-v1. Multi-return covers tuples. | yes |
-| Concurrency sugar (`fan out`, `select!`, actors) | ferrous-wheel owns that space; goala stays functional-core. | partly |
-| Macros, compiler plugins, reflection | Never. | no |
-| Its own module system | Reuses `go.mod` outright (see 4.5). gala reimplements `mod init/add/tidy`; goala inherits Go's. | yes (`gala mod`) |
+| Excluded | Why |
+|---|---|
+| `Future`, `IO`, `Either`, `Validated`, `Try` as distinct types | `Result`/`Option` cover the demo; effect stacks need HKT-ish machinery a CST transpiler shouldn't fake. `Try[T]` ≅ `Result[T]` here. |
+| Generic do-notation / structural `FlatMap` resolution / `also` parallel binds | Requires real typeclass dispatch; v1 `bind` is monomorphic sugar. |
+| Zero-reflection JSON (`Codec[T]`/`StructMeta`) | Great feature, orthogonal to the thesis. `derive Json` is a listed post-v1 extension — the ferrous-wheel `derive` machinery shows the path. |
+| Immutable collections library (`List`, `HashMap`, `TreeSet`…) | Library work, not thesis work. Go slices/maps + `for`/`match` suffice. |
+| Named arguments with defaults | Needs call-site rewriting with full signature knowledge everywhere; cut. |
+| Nested constructor patterns, regex extractors, `Tuple2..5` | Exhaustiveness for nested patterns is a product-space construction; post-v1. Multi-return covers tuples. |
+| Concurrency sugar (`fan out`, `select!`, actors) | ferrous-wheel owns that space; goala stays functional-core. |
+| Macros, compiler plugins, reflection | Never. |
+| Its own module system | Reuses `go.mod` outright (see 4.5); goala inherits Go's. |
 
 ---
 
@@ -669,8 +695,8 @@ Shape is an interface; emit a `String()` method per case struct returning
 
 ### 4.4 Runtime-library policy
 
-Zero-runtime, hard requirement (matching gala's "transpiles to plain Go" and
-fw's "no runtime library, no hidden dependencies"):
+Zero-runtime, hard requirement ("transpiles to plain Go"; no runtime library,
+no hidden dependencies — the ferrous-wheel policy):
 
 - Generated files import only stdlib packages actually used.
 - All helpers are emitted into the generated output, guarded by usage
@@ -688,7 +714,7 @@ fw's "no runtime library, no hidden dependencies"):
   module transpiles to sibling `<name>_goala.go` files in the same package.
   Consequences, all deliberate:
   - `go.mod` is the module system; `go get` is dependency management. goala
-    ships no `goala mod` (contrast: gala reimplements `mod init/add/tidy`).
+    ships no `goala mod`.
   - Hand-written `.go` and `.goala` files coexist in one package —
     bidirectional interop by construction.
   - `//go:generate goala emit ./...` makes goala a normal Go codegen citizen;
@@ -699,7 +725,7 @@ fw's "no runtime library, no hidden dependencies"):
 
 ---
 
-## 5. The thesis demo (the GopherCon artifact)
+## 5. The flagship demo
 
 One command, from a clean machine with only Go, a C compiler, Neovim, and
 canopy installed:
@@ -734,12 +760,12 @@ Script (`demo/run.sh`), each step printed with narration:
 6. **The backend is the cheap part.** `goala run demo/tokens.goala` — output
    prints; `goala emit demo/tokens.goala | bat -l go` shows clean, zero-runtime
    Go. Delete a match arm, `goala build` fails with
-   `match on Token is not exhaustive: missing Punct` — the gala flagship
-   feature, no JVM in sight.
-7. **The punchline slide.** Side-by-side toolchain inventory: gala = ANTLR4 +
-   JVM + Bazel + hand-built IDE plugin + hand-built LSP, editors get zero
-   native grammar support. goala = `go build`, and Neovim/Helix/Zed/canopy/LSP
-   all came from one function.
+   `match on Token is not exhaustive: missing Punct` — compile-time
+   exhaustiveness, no JVM in sight.
+7. **The toolchain inventory.** A conventional language front-end = parser
+   generator + build system + hand-built IDE plugin + hand-built LSP, with
+   editors getting zero native grammar support. goala = `go build`, and
+   Neovim/Helix/Zed/canopy/LSP all came from one function.
 
 The single sharpest artifact is **step 3**: watching a brand-new language get
 native syntax highlighting and `:InspectTree` in stock Neovim from an emitted
@@ -957,10 +983,10 @@ Phases 1–2 (the thesis-critical spine) land in ~5 weeks.
   under active hardening (gotreesitter branch work, July 2026). v1 LSP does
   full reparses (goala files are small); adopt incremental when the upstream
   correctness work settles.
-- **Q8 — `derive Json` (gala's zero-reflection codec) as the v1.1 flagship.**
+- **Q8 — `derive Json` (zero-reflection codecs) as the v1.1 flagship.**
   The fw derive machinery + goala's sealed metadata make compiler-generated
-  marshalers a natural next proof point ("goala gets gala's JSON story for a
-  weekend of work"). Out of v1 scope; keep the sealed registry's shape amenable.
+  marshalers a natural next proof point (compiler-generated
+  marshalers with zero reflection). Out of v1 scope; keep the sealed registry's shape amenable.
 
 ---
 
@@ -988,6 +1014,7 @@ Phases 1–2 (the thesis-critical spine) land in ~5 weeks.
   `cmd/canopyls/main.go` (LSP), `pkg/scope/index.go:17`,
   `pkg/complexity/complexity.go:86`, `internal/scope/scope.go:63`
   (registry-driven detection).
-- gala: github.com/martianoff/gala README (sealed types + exhaustive match,
-  monad stack, `bind`/`also`, zero-reflection JSON, `(T,error)`→`Try[T]`,
-  ANTLR/JVM/Bazel toolchain, `gala mod/run/build/test/lsp`, GoLand plugin).
+- Prior art: Scala/Rust for the type-system surface; gala
+  (github.com/martianoff/gala) and ferrous-wheel for transpile-to-Go
+  precedents; arbiter (m31labs.dev/arbiter) for the in-house
+  language+compiler+bytecode-VM lineage.

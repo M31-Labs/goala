@@ -4,17 +4,13 @@
   (import_declaration
     (import_spec_list
       (import_spec
-        (interpreted_string_literal
-          (interpreted_string_literal_content)))
+        (interpreted_string_literal))
       (import_spec
-        (interpreted_string_literal
-          (interpreted_string_literal_content)))
+        (interpreted_string_literal))
       (import_spec
-        (interpreted_string_literal
-          (interpreted_string_literal_content)))
+        (interpreted_string_literal))
       (import_spec
-        (interpreted_string_literal
-          (interpreted_string_literal_content)))))
+        (interpreted_string_literal))))
   (comment)
   (comment)
   (function_declaration
@@ -129,8 +125,7 @@
                       (identifier)
                       (identifier))
                     (argument_list
-                      (interpreted_string_literal
-                        (interpreted_string_literal_content))
+                      (interpreted_string_literal)
                       (identifier)))))))))
       (expression_statement
         (call_expression
@@ -146,8 +141,7 @@
           (call_expression
             (identifier)
             (argument_list
-              (interpreted_string_literal
-                (interpreted_string_literal_content))))
+              (interpreted_string_literal)))
           (match_arm
             (constructor_pattern
               (identifier)

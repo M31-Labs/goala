@@ -4,11 +4,9 @@
   (import_declaration
     (import_spec_list
       (import_spec
-        (interpreted_string_literal
-          (interpreted_string_literal_content)))
+        (interpreted_string_literal))
       (import_spec
-        (interpreted_string_literal
-          (interpreted_string_literal_content)))))
+        (interpreted_string_literal))))
   (comment)
   (comment)
   (sealed_declaration
@@ -156,8 +154,7 @@
       (match_arm
         (binder_pattern
           (identifier))
-        (interpreted_string_literal
-          (interpreted_string_literal_content)))))
+        (interpreted_string_literal))))
   (function_declaration
     (identifier)
     (parameter_list)
